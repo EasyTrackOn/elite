@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@tailwindcss/browser@latest"></script>
+    <style>
+        /* Custom CSS for the message box */
+        #message-box {
+            display: none;
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #f0fdf4;
+            color: #15803d;
+            padding: 16px;
+            border-radius: 6px;
+            border: 1px solid #16a34a;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            z-index: 10;
+        }
+        #message-box.success {
+            background-color: #f0fdf4;
+            color: #15803d;
+            border-color: #16a34a;
+        }
+        #message-box.error {
+            background-color: #fee2e2;
+            color: #b91c1c;
+            border-color: #ef4444;
+        }
+        #message-box.show {
+            display: block;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 font-inter">
+    <div id="message-box" class="hidden"></div>
+    <div class="container mx-auto p-6 sm:p-10 md:p-12 lg:p-16">
+        <div id="login-div" class="bg-white rounded-lg shadow-md p-6 space-y-4">
+            <h2 class="text-2xl font-semibold text-gray-800">Student Login</h2>
+            <div class="mb-4">
+                <label for="cic-number" class="block text-gray-700 text-sm font-bold mb-2">CIC Number:</label>
+                <input type="text" id="cic-number" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" placeholder="Enter your CIC Number">
+            </div>
+            <div class="mb-4">
+                <label for="class-dropdown" class="block text-gray-700 text-sm font-bold mb-2">Select Class:</label>
+                <select id="class-dropdown" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                    <option value="" disabled selected>Select Class</option>
+                    </select>
+            </div>
+            <button id="login-button" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">Login</button>
+        </div>
+
+        <div id="dashboard-div" class="bg-white rounded-lg shadow-md p-6 space-y-6 hidden">
+            <h2 class="text-2xl font-semibold text-gray-800">Welcome to Your Dashboard</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="bg-indigo-100 rounded-lg p-4 shadow-sm cursor-pointer hover:shadow-md transition duration-300" id="profile-details">
+                    <h3 class="text-lg font-semibold text-indigo-700">Your Profile</h3>
+                    <p class="text-gray-600">View your academic details</p>
+                </div>
+                <div class="bg-green-100 rounded-lg p-4 shadow-sm cursor-pointer hover:shadow-md transition duration-300" id="fee-details-link">
+                    <h3 class="text-lg font-semibold text-green-700">Fee Details</h3>
+                    <p class="text-gray-600">View your fee payment history</p>
+                </div>
+            </div>
+
+            <div id="profile-info" class="bg-white rounded-lg p-6 space-y-4 hidden">
+                <h3 class="text-xl font-semibold text-gray-800">Profile Details</h3>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div><span class="font-semibold text-gray-700">Name:</span> <span id="student-name" class="text-gray-900"></span></div>
+                    <div><span class="font-semibold text-gray-700">CIC Number:</span> <span id="student-cic" class="text-gray-900"></span></div>
+                    <div><span class="font-semibold text-gray-700">Class:</span> <span id="student-class" class="text-gray-900"></span></div>
+                    <div><span class="font-semibold text-gray-700">Contact:</span> <span id="student-contact" class="text-gray-900"></span></div>
+                </div>
+            </div>
+
+            <div id="fee-details-info" class="bg-white rounded-lg p-6 space-y-4 hidden">
+                <h3 class="text-xl font-semibold text-gray-800">Fee Details</h3>
+                <table id="fee-details-table" class="min-w-full table-auto rounded-lg hidden">
+                    <thead class="bg-gray-200">
+                        <tr>
+                            <th class="px-4 py-2 text-left">SL</th>
+                            <th class="px-4 py-2 text-left">Receipt Number</th>
+                            <th class="px-4 py-2 text-left">Date</th>
+                            <th class="px-4 py-2 text-left">Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody class="text-gray-700">
+                        <tr>
+                            <td colspan="4" class="px-4 py-2 text-center text-gray-500">No fee details available.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+             <button id="logout-button" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">Logout</button>
+        </div>
+    </div>
+
+    <script>
+    const loginDiv = document.getElementById('login-div');
+    const dashboardDiv = document.getElementById('dashboard-div');
+    const loginButton = document.getElementById('login-button');
+    const cicInput = document.getElementById('cic-number');
+    const classDropdown = document.getElementById('class-dropdown');
+    const messageBox = document.getElementById('message-box');
+    const profileDetailsDiv = document.getElementById('profile-info');
+    const feeDetailsDiv = document.getElementById('fee-details-info');
+    const profileLink = document.getElementById('profile-details');
+    const feeDetailsLink = document.getElementById('fee-details-link');
+    const studentNameDisplay = document.getElementById('student-name');
+    const studentCicDisplay = document.getElementById('student-cic');
+    const studentClassDisplay = document.getElementById('student-class');
+    const studentContactDisplay = document.getElementById('student-contact');
+    const feeDetailsTable = document.getElementById('fee-details-table');
+    const logoutButton = document.getElementById('logout-button');
+
+
+    // Sample student and fee data (Replace with actual data fetching)
+    const classes = ["ALIYA SALISA","THAMHIDIYA SANIYA","THAMHIDIYA ULA 24","ALIYA SANIYA"]; // Example classes
+    const students = [
+        { cicnumber: "12345", stuName: "John Doe", stuClass: "Class 1", contact: "1234567890" },
+        { cicnumber: "67890", stuName: "Jane Smith", stuClass: "Class 2", contact: "9876543210" },
+        { cicnumber: "23456", stuName: "Alice Johnson", stuClass: "Class 1", contact: "8765432109" },
+    ];
+    const feeData = {
+        "12345": [
+            { receiptNumber: "R1001", date: "2024-01-15", amount: 2000 },
+            { receiptNumber: "R1002", date: "2024-02-20", amount: 3000 },
+        ],
+        "67890": [
+            { receiptNumber: "R2001", date: "2024-01-10", amount: 1500 },
+            { receiptNumber: "R2002", date: "2024-03-01", amount: 2500 },
+        ],
+        "23456": [
+            { receiptNumber: "R3001", date: "2024-02-01", amount: 1000 },
+            { receiptNumber: "R3002", date: "2024-03-10", amount: 1000 },
+            { receiptNumber: "R3003", date: "2024-04-10", amount: 1000 },
+        ]
+    };
+
+    function showMessage(message, type = 'success') {
+        messageBox.textContent = message;
+        messageBox.className = `fixed top-4 left-1/2 transform -translate-x-1/2 bg-${type === 'success' ? 'green' : 'red'}-100 text-${type === 'success' ? 'green' : 'red'}-700 border border-${type === 'success' ? 'green' : 'red'}-400 px-4 py-2 rounded shadow-md`;
+        messageBox.classList.add('show');
+        setTimeout(() => {
+            messageBox.classList.remove('show');
+        }, 3000);
+    }
+
+
+
+    // Populate the class dropdown
+    classes.forEach(className => {
+        const option = document.createElement('option');
+        option.value = className;
+        option.textContent = className;
+        classDropdown.appendChild(option);
+    });
+
+    loginButton.addEventListener('click', () => {
+    const cicNumber = cicInput.value.trim();
+    const selectedClass = classDropdown.value;
+
+    // if (!cicNumber || !selectedClass) {
+    //     showMessage('Please enter your CIC Number and select your class.', 'error');
+    //     return;
+    // }
+
+    fetch('https://script.google.com/macros/s/AKfycby2vUiApGdDdJaZ_ZiVg_cu8c3VMBXlwTDGJuNpx8zkZ5XO5zliFM-88u13sJez3J-HdA/exec', {
+        method: 'POST',
+        body: JSON.stringify({
+            cicnumber: cicNumber,//"15540",//cicNumber,
+            className: selectedClass//"ALIYA SALISA"// selectedClass
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        console.log(data);
+        if (data.success && data.student) {
+            showMessage('Login successful!');
+            loginDiv.classList.add('hidden');
+            dashboardDiv.classList.remove('hidden');
+
+            studentNameDisplay.textContent = data.student.stuName;
+            studentCicDisplay.textContent = data.student.cicnumber;
+            studentClassDisplay.textContent = data.student.stuClass;
+            studentContactDisplay.textContent = data.student.contact;
+
+            displayFeeDetails(data.fees);
+            sessionStorage.setItem('loggedIn', 'true');
+            sessionStorage.setItem('studentData', JSON.stringify(data.student));
+        } else {
+            showMessage('Invalid CIC Number or Class. Please try again.', 'error');
+            cicInput.value = '';
+            classDropdown.value = '';
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showMessage('Something went wrong. Please try again later.', 'error');
+    });
+});
+
+
+
+
+    function displayFeeDetails(fees) {
+        const tableBody = feeDetailsTable.querySelector('tbody');
+        tableBody.innerHTML = ''; // Clear previous content
+
+        if (fees && fees.length > 0) {
+            feeDetailsTable.classList.remove('hidden');
+            fees.forEach((fee, index) => {
+                const row = tableBody.insertRow();
+                const slCell = row.insertCell();
+                const receiptNumberCell = row.insertCell();
+                const dateCell = row.insertCell();
+                const amountCell = row.insertCell();
+
+                slCell.textContent = index + 1;
+                receiptNumberCell.textContent = fee.receiptNumber;
+                dateCell.textContent = fee.date;
+                amountCell.textContent = fee.amount;
+            });
+        } else {
+            // tableBody.innerHTML = '<tr><td colspan="4" class="px-4 py-2 text-center text-gray-500">No fee details available.</td></tr>';
+            feeDetailsTable.classList.add('hidden');
+        }
+    }
+
+    profileLink.addEventListener('click', () => {
+        profileDetailsDiv.classList.toggle('hidden');
+        feeDetailsDiv.classList.add('hidden');
+    });
+
+    feeDetailsLink.addEventListener('click', () => {
+        feeDetailsDiv.classList.toggle('hidden');
+        profileDetailsDiv.classList.add('hidden');
+    });
+
+     logoutButton.addEventListener('click', () => {
+        sessionStorage.removeItem('loggedIn');
+        sessionStorage.removeItem('studentData');
+        loginDiv.classList.remove('hidden');
+        dashboardDiv.classList.add('hidden');
+        profileDetailsDiv.classList.add('hidden');
+        feeDetailsDiv.classList.add('hidden');
+        cicInput.value = '';
+        classDropdown.value = '';
+    });
+
+    // Check for logged-in user on page load
+    if (sessionStorage.getItem('loggedIn') === 'true') {
+        const storedStudentData = JSON.parse(sessionStorage.getItem('studentData'));
+        if(storedStudentData){
+            loginDiv.classList.add('hidden');
+            dashboardDiv.classList.remove('hidden');
+
+            studentNameDisplay.textContent = storedStudentData.stuName;
+            studentCicDisplay.textContent = storedStudentData.cicnumber;
+            studentClassDisplay.textContent = storedStudentData.stuClass;
+            studentContactDisplay.textContent = storedStudentData.contact;
+             //const storedFees = feeData[storedStudentData.cicnumber] || [];
+            //displayFeeDetails(storedFees);
+            fetch('https://script.google.com/macros/s/AKfycby2vUiApGdDdJaZ_ZiVg_cu8c3VMBXlwTDGJuNpx8zkZ5XO5zliFM-88u13sJez3J-HdA/exec', {
+    method: 'POST',
+    body: JSON.stringify({
+        action: 'getStudentFeeData',
+        cicnumber: storedStudentData.cicnumber,
+        stuClass: storedStudentData.stuClass
+    }),
+    headers: {
+        'Content-Type': 'application/json'
+    }
+})
+.then(res => res.json())
+.then(data => {
+    displayFeeDetails(data.fees);
+})
+.catch(error => {
+    console.error('Error loading fee data on session load:', error);
+});
+
+        }
+        else{
+             loginDiv.classList.remove('hidden');
+             dashboardDiv.classList.add('hidden');
+        }
+
+    }
+    </script>
+</body>
+</html>
